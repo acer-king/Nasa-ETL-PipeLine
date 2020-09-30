@@ -2,3 +2,5 @@ python-dateutil
 numpy
 netCDF4
 pandas
+cdsapi
+urllib3

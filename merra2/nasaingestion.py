@@ -30,8 +30,10 @@ def fill_datetime_components(dt_component_list, fill_positions, suffix=''):
             for dtComponent in dt_component_list]
 
 
-def download_era5_netcdf(year: int = 2020, month: int = 8, era5_variables: list = ['100m_u_component_of_wind'],
-                        geo_subset: str = 'testdata', CDS_API_KEY: str = '', force_download: bool = False) -> str:
+def download_era5_netcdf(year: int = None, month: int = None,
+                         geo_subset: str = None,
+                         era5_variables: list = None,
+                         CDS_API_KEY: str = None) -> str:
     """
     Download a NetCDF file from ERA5. The Climate Data
     Store (CDS) API is required. Setup instructions in
@@ -55,6 +57,21 @@ def download_era5_netcdf(year: int = 2020, month: int = 8, era5_variables: list 
                         Assemble all variables as columns into a single PANDAS table with rows by lat, lon,&
                         timestamp UTC time index
     """
+    if(year is None or month is None or era5_variables is None or geo_subset is None):
+        year = 2020
+        month = 8
+        geo_subset = 'testdata'
+        era5_variables = [
+            '2m_temperature',
+            '10m_v_component_of_wind',
+            '10m_u_component_of_wind',
+            '50m_v_component_of_wind',
+            '50m_u_component_of_wind'
+        ]
+
+    if CDS_API_KEY is None:
+        CDS_API_KEY = '61936:f89a7bdd-9e05-4595-872a-8c09077255c1'
+
     if not isinstance(year, int):
         year = int(year)
 
@@ -71,6 +88,7 @@ def download_era5_netcdf(year: int = 2020, month: int = 8, era5_variables: list 
     if geo_subset not in BOUNDING_BOX.keys():
         raise Exception(
             'Invalid geoSubset, only "us_continental", "au_continental", "global" and "testdata" supported.')
+
     area_subset = BOUNDING_BOX[geo_subset]
     year_filter = str(year)
     month_filter = fill_datetime_components(month, fill_positions=2)
@@ -85,10 +103,8 @@ def download_era5_netcdf(year: int = 2020, month: int = 8, era5_variables: list 
     hour_filter = fill_datetime_components(
         hour_list, fill_positions=2, suffix=':00')
 
-    
     temp_fpath = '_era5_{}_.nc'.format(str(year) + str(month))
 
-    # If force_download is False, only download if file doesn't exist in s3.
     global FILE_NAME_ERA
     if FILE_NAME_ERA == temp_fpath:
         logging.info("ERA5 raw file already exists for Year: {}, Month: {}".format(
@@ -102,6 +118,7 @@ def download_era5_netcdf(year: int = 2020, month: int = 8, era5_variables: list 
                 logging.info("The old file could not be deleted")
             finally:
                 pass
+
     FILE_NAME_ERA = temp_fpath
     c = cdsapi.Client(
         key=CDS_API_KEY, url="https://cds.climate.copernicus.eu/api/v2")
@@ -123,6 +140,7 @@ def download_era5_netcdf(year: int = 2020, month: int = 8, era5_variables: list 
 
     logging.info("ERA5 raw file downloaded for Year: {}, Month: {}".format(
         year, month))
+
     del c
-    print(temp_fpath,"fpath1")
+
     return temp_fpath
