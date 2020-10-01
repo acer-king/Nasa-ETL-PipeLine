@@ -65,8 +65,8 @@ def download_era5_netcdf(year: int = None, month: int = None,
             '2m_temperature',
             '10m_v_component_of_wind',
             '10m_u_component_of_wind',
-            '50m_v_component_of_wind',
-            '50m_u_component_of_wind'
+            '100m_v_component_of_wind',
+            '100m_u_component_of_wind'
         ]
 
     if CDS_API_KEY is None:
