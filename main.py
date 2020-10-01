@@ -1,6 +1,5 @@
 import pandas as pd
-
-x = ["3", 4, 5]
-y = sum([[value]*3 for value in x], [])
-
-print(y)
+df = pd.DataFrame()
+df['x'] = [1, 2, 3]
+df['y'] = [11, 12, 13]
+print(df)

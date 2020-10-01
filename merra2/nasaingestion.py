@@ -8,6 +8,7 @@ import pandas as pd
 import tempfile
 from merra2 import *
 import datetime
+import netCDF4 as nc4
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 logging.basicConfig(
@@ -30,10 +31,10 @@ def fill_datetime_components(dt_component_list, fill_positions, suffix=''):
             for dtComponent in dt_component_list]
 
 
-def download_era5_netcdf(year: int = None, month: int = None,
-                         geo_subset: str = None,
-                         era5_variables: list = None,
-                         CDS_API_KEY: str = None) -> str:
+def get_era5_netcdf(year: int = None, month: int = None,
+                    geo_subset: str = None,
+                    era5_variables: list = None,
+                    CDS_API_KEY: str = None) -> str:
     """
     Download a NetCDF file from ERA5. The Climate Data
     Store (CDS) API is required. Setup instructions in
@@ -106,10 +107,8 @@ def download_era5_netcdf(year: int = None, month: int = None,
     temp_fpath = '_era5_{}_.nc'.format(str(year) + str(month))
 
     global FILE_NAME_ERA
-    if FILE_NAME_ERA == temp_fpath:
-        logging.info("ERA5 raw file already exists for Year: {}, Month: {}".format(
-            year, month))
-        return temp_fpath
+    if FILE_NAME_ERA == temp_fpath or os.path.exists(temp_fpath):
+        return convertCDN2Panda(temp_fpath)
     else:
         if os.path.exists(str(FILE_NAME_ERA)):
             try:
@@ -143,4 +142,57 @@ def download_era5_netcdf(year: int = None, month: int = None,
 
     del c
 
-    return temp_fpath
+    return convertCDN2Panda(temp_fpath)
+
+
+def convertCDN2Panda(file_name: str = None) -> object:
+    """
+    Input a Nasa file and exports
+    file_name: path to Nasa's Earth data file
+    """
+    if(file_name is None):
+        return None
+    # read in the data
+    merraData = nc4.Dataset(file_name, 'r')
+    variables = set(merraData.variables)
+    desiredVariables = set(
+        {'u10', 'u100', 'v10', 'v100', 't2m'}
+    )
+    desiredVariables = set([x.lower() for x in desiredVariables])
+    var1 = variables.intersection(desiredVariables)
+    desiredVariables = set([x.upper() for x in desiredVariables])
+    var2 = variables.intersection(desiredVariables)
+    fileVars = list(var1.union(var2))
+    if len(fileVars) == 0:
+        print('This file contains none of the selected SDS. Skipping...')
+        return
+
+    data = {}
+    for SDS_NAME in fileVars:
+        try:
+            # read merra data as a vector
+            data[SDS_NAME] = merraData.variables[SDS_NAME][:]
+
+        except Exception:
+            print(
+                'There is an issue with your MERRA file (might be the wrong MERRA file type). Skipping...')
+            continue
+
+    timelist = list(merraData.variables['time'][:])
+    latlist = list(merraData.variables['latitude'][:])
+    lnglist = list(merraData.variables['longitude'][:])
+
+    df = pd.DataFrame(columns=['v10', 'u10', 'v100', 'u100', 't2m'])
+
+    df['v10'] = data['v10'].reshape(-1).tolist()
+    df['u10'] = data['u10'].reshape(-1).tolist()
+    df['u100'] = data['u100'].reshape(-1).tolist()
+    df['v100'] = data['v100'].reshape(-1).tolist()
+    df['t2m'] = data['t2m'].reshape(-1).tolist()
+    df['time'] = sum([[value]*len(latlist)*len(lnglist)
+                      for value in timelist], [])
+    df['lat'] = sum([[value]*len(lnglist)
+                     for value in latlist], [])*len(timelist)
+    df['lng'] = lnglist*len(timelist)*len(latlist)
+    df.set_index(['time', 'lat', 'lng'], inplace=True)
+    return df
