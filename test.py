@@ -20,7 +20,7 @@ Module: read_merra_aerosol_and_dump_ascii.py
 ==========================================================================================
 Disclaimer: The code is for demonstration purposes only. Users are responsible to check for accuracy and revise to fit their objective.
 
-Author: Justin Roberts-Pierel, 2015 
+Author: Justin Roberts-Pierel, 2015
 Organization: NASA ARSET
 Purpose: To save a MERRA netCDF4 file in ASCII format. Saves lat, lon, and other SDS dependent on file.
 
@@ -47,42 +47,35 @@ for FILE_NAME in ['_era5_20208_.nc']:
         print('This file contains none of the selected SDS. Skipping...')
         continue
 
+    data = {}
+    for SDS_NAME in fileVars:
+        try:
+            # read merra data as a vector
+            data[SDS_NAME] = merraData.variables[SDS_NAME][:]
+
+        except Exception:
+            print(
+                'There is an issue with your MERRA file (might be the wrong MERRA file type). Skipping...')
+            continue
+    # exit(0)
+
     timelist = list(merraData.variables['time'][:])
     latlist = list(merraData.variables['latitude'][:])
     lnglist = list(merraData.variables['longitude'][:])
 
-    result = pd.DataFrame()
-    for SDS_NAME in fileVars:
-        try:
-            # read merra data as a vector
-            data = merraData.variables[SDS_NAME][:]
-        except:
-            print(
-                'There is an issue with your MERRA file (might be the wrong MERRA file type). Skipping...')
-            continue
+    df = pd.DataFrame(columns=['v10', 'u10', 'v100', 'u100', 't2m'])
 
-        print(len(data))
-        print(SDS_NAME)
-        print(type(data))
-        inp = input("")
+    df['v10'] = data['v10'].reshape(-1).tolist()
+    df['u10'] = data['u10'].reshape(-1).tolist()
+    df['u100'] = data['u100'].reshape(-1).tolist()
+    df['v100'] = data['v100'].reshape(-1).tolist()
+    df['t2m'] = data['t2m'].reshape(-1).tolist()
+    df['time'] = sum([[value]*len(latlist)*len(lnglist)
+                      for value in timelist], [])
+    df['lat'] = sum([[value]*len(lnglist)
+                     for value in latlist], [])*len(timelist)
+    df['lng'] = lnglist*len(timelist)*len(latlist)
+    df.set_index(['time', 'lat', 'lng'], inplace=True)
+    df.to_csv('1.csv')
 
-        continue
-        if len(data.shape) == 4:
-            level = data.shape[1]-1
-            data = data[0, level, :, :]
-        elif len(data.shape) == 3:
-            level = data.shape[0]-1
-            data = data[level, :, :]
-        data = data.ravel()
-        # save variable
-        output[:, index] = data
-        tempOutput.append(SDS_NAME)
-        index += 1
-
-    # # stacks the titles on the data array to be saved to file
-    # output = np.row_stack((tempOutput, output))
-    # # create the name of the file from the filename
-    # outputName = '{0}.txt'.format(FILE_NAME[:-4])
-    # # save the file
-    # np.savetxt(outputName, output, delimiter=',', fmt='%s')
 print('\nAll valid files have been saved successfully.')

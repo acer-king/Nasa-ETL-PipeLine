@@ -1,5 +1,6 @@
-import era5
+import pandas as pd
 
-if __name__ == "__main__":
-    era5.test.runall()
-    pass
+x = ["3", 4, 5]
+y = sum([[value]*3 for value in x], [])
+
+print(y)
