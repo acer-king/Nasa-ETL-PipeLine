@@ -34,7 +34,8 @@ def fill_datetime_components(dt_component_list, fill_positions, suffix=''):
 def get_era5_netcdf(year: int = None, month: int = None,
                     geo_subset: str = None,
                     era5_variables: list = None,
-                    CDS_API_KEY: str = None) -> str:
+                    CDS_API_KEY: str = None,
+                    outputPath: str = "") -> str:
     """
     Download a NetCDF file from ERA5. The Climate Data
     Store (CDS) API is required. Setup instructions in
@@ -54,6 +55,8 @@ def get_era5_netcdf(year: int = None, month: int = None,
                         'global' and 'testdata'.
     :param CDS_API_KEY: String
                         CDS_API_KEY.
+    :param outputPath: String
+                        root path  to output of zipped csv file
     :return: Object: Pandas
                         Assemble all variables as columns into a single PANDAS table with rows by lat, lon,&
                         timestamp UTC time index
@@ -108,7 +111,11 @@ def get_era5_netcdf(year: int = None, month: int = None,
 
     global FILE_NAME_ERA
     if FILE_NAME_ERA == temp_fpath or os.path.exists(temp_fpath):
-        return convertCDN2Panda(temp_fpath)
+        df = convertCDN2Panda(temp_fpath)
+        compression_opts = dict(method='zip', archive_name='out.csv')
+        df.to_csv(os.path.join(outputPath, 'out.zip'),
+                  compression=compression_opts)
+        return df
     else:
         if os.path.exists(str(FILE_NAME_ERA)):
             try:
@@ -141,8 +148,11 @@ def get_era5_netcdf(year: int = None, month: int = None,
         year, month))
 
     del c
-
-    return convertCDN2Panda(temp_fpath)
+    df = convertCDN2Panda(temp_fpath)
+    compression_opts = dict(method='zip', archive_name='out.csv')
+    df.to_csv(os.path.join(outputPath, 'out.zip'),
+              compression=compression_opts)
+    return df
 
 
 def convertCDN2Panda(file_name: str = None) -> object:

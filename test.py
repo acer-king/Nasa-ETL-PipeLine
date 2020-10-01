@@ -13,5 +13,5 @@ import pandas as pd
 import os
 
 
-df = get_era5_netcdf()
-print(df)
+# df = get_era5_netcdf()
+# # print(df)
