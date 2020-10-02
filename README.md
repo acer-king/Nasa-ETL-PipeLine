@@ -1,4 +1,7 @@
 ## Install Required Packages
+    git clone https://github.com/acer-king/Nasa-ETL-PipeLine
+    cd Nasa-ETL-PipeLine
+    python setup.py install
     pip install -r requirements.txt
 Next, include the SDK in your project  by adding:
 
