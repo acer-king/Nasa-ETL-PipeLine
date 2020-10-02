@@ -9,13 +9,16 @@ class TestEra5(unittest.TestCase):
     def setUp(self) -> None:
         self.test_year = datetime.datetime.now().year
         self.test_month = 8
-        self.test_geo_subset = 'testdata'
+        self.test_geo_subset = [35, -106, 29, -98]
         self.test_era5_variables = [
-            '2m_temperature',
-            '10m_v_component_of_wind',
-            '10m_u_component_of_wind',
-            '100m_v_component_of_wind',
-            '100m_u_component_of_wind'
+            't2m',
+            'v10',
+            'u10',
+            'v100',
+            'u100'
+        ]
+        self.test_invalid_era5_variables = [
+            '5tm',
         ]
         self.test_CDS_API_KEY = '61936:f89a7bdd-9e05-4595-872a-8c09077255c1'
         self.test_Invalid_CDS_API_KEY = '61936:f89a7bdd-9e05-4595-872a-8c09077235c1'
@@ -32,6 +35,12 @@ class TestEra5(unittest.TestCase):
                             self.test_month,
                             self.test_geo_subset,
                             self.test_era5_variables,
+                            self.test_Invalid_CDS_API_KEY)
+        with self.assertRaises(Exception):
+            get_era5_netcdf(self.test_year,
+                            self.test_month,
+                            self.test_geo_subset,
+                            self.test_invalid_era5_variables,
                             self.test_Invalid_CDS_API_KEY)
 
     def test_Result(self):

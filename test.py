@@ -11,7 +11,17 @@ import tempfile
 from merra2.nasaingestion import *
 import pandas as pd
 import os
+import datetime
 
+df = get_era5_netcdf(year=2020, month=8, geo_subset=[
+                     35, -106, 29, -98], era5_variables=['v10', 't2m'])
+# # del df['t2m']
+df = df[:3]
+print(df)
 
-# df = get_era5_netcdf()
-# # print(df)
+# df = get_era5_netcdf(year=2020, month=8, geo_subset=[
+#                      35, -106, 29, -98], era5_variables=['v10', 't2m'])
+# # del df['t2m']
+# df = df[:3]
+# print(df)
+# 532950
