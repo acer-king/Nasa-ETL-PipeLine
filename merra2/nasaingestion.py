@@ -170,7 +170,7 @@ def get_era5_netcdf(year: int = None, month: int = None,
             'year': year_filter,
             'month': month_filter,
             'day': day_filter,
-            'area': area_subset,
+            'area': geo_subset,
             'time': hour_filter,
             'format': 'netcdf'
         },

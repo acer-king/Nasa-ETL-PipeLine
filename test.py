@@ -8,7 +8,7 @@ import cdsapi
 import logging
 import pandas as pd
 import tempfile
-from merra2.nasaingestion import *
+from merra2.nasaingestion import get_era5_netcdf
 import pandas as pd
 import os
 import datetime
