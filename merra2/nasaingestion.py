@@ -85,6 +85,8 @@ def get_era5_netcdf(year: int = None, month: int = None,
 
     year = 2020 if year is None else year
     month = 8 if month is None else month
+    era5_variables = ['v10', 'u10', 'v100', 'u100',
+                      't2m'] if era5_variables is None else era5_variables
     global g_era5_variables
     geo_subset = [35, -106, 29, -98] if geo_subset is None else geo_subset
     CDS_API_KEY = '61936:f89a7bdd-9e05-4595-872a-8c09077255c1' if CDS_API_KEY is None else CDS_API_KEY

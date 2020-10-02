@@ -16,7 +16,7 @@ import datetime
 
 if __name__ == "__main__":
     df = get_era5_netcdf(year=2020, month=8, geo_subset=[
-                         35, -106, 29, -98], era5_variables=['v10', 't2m'])
+                         35, -106, 29, -98], outputPath="")
     df = df[:3]
     print(df)
     pass
