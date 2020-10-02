@@ -242,6 +242,9 @@ def convertCDN2Panda(file_name: str = None) -> object:
             continue
 
     timelist = list(merraData.variables['time'][:])
+    # convert timestamp to isotime
+    timelist = [str(datetime.datetime.fromtimestamp(
+        timestamp).isoformat()) for timestamp in timelist]
     latlist = list(merraData.variables['latitude'][:])
     lnglist = list(merraData.variables['longitude'][:])
 
