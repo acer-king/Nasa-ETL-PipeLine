@@ -1,6 +1,6 @@
 import unittest
 import datetime
-from merra2.nasaingestion import *
+from merra2.nasaingestion import get_era5_netcdf
 from dateutil.relativedelta import relativedelta
 
 

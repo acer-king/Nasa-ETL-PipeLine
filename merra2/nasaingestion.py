@@ -6,7 +6,7 @@ import cdsapi
 import logging
 import pandas as pd
 import tempfile
-from merra2 import *
+from merra2 import FILE_NAME_ERA
 import datetime
 import netCDF4 as nc4
 
