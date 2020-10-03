@@ -41,7 +41,8 @@ def get_era5_netcdf(year: int = None, month: int = None,
                     geo_subset: list = None,
                     era5_variables: list = None,
                     CDS_API_KEY: str = None,
-                    outputPath: str = None) -> str:
+                    outputPath: str = None,
+                    forceUpdate=False) -> str:
     """
     Download a NetCDF file from ERA5 and convert the file to pandas object to be returned. The Climate Data
     Store (CDS) API is required. Setup instructions in
@@ -99,7 +100,7 @@ def get_era5_netcdf(year: int = None, month: int = None,
         raise Exception('year cannot be greater than current year: {}'.format(
             datetime.datetime.now().year))
 
-    if month < 1 or month > 12:
+    if month < 1 or month > datetime.datetime.now().month:
         raise Exception('month has to be between 1 and 12.')
 
     # Determine bounding boxes
@@ -114,8 +115,9 @@ def get_era5_netcdf(year: int = None, month: int = None,
             "Invalid era5_variables. should contain vars in ['v10', 'u10', 'v100', 'u100', 't2m']")
 
     year_filter = str(year)
-    month_filter = fill_datetime_components(month, fill_positions=2)
 
+    month_filter = fill_datetime_components(
+        list(range(month, datetime.datetime.now().month+1)), fill_positions=2)
     # List of all days in a month
     day_list = fill_datetime_components(list(range(1, 32)), fill_positions=2)
     day_filter = fill_datetime_components(day_list, fill_positions=2)
@@ -130,8 +132,8 @@ def get_era5_netcdf(year: int = None, month: int = None,
     temp_fpath = '_era5_{}_.nc'.format(str(year) + str(month))
 
     # find out if same name file exists, then load it. if not, download dat to a new file with temp_fpath
-    global FILE_NAME_ERA
-    if FILE_NAME_ERA == temp_fpath or os.path.exists(temp_fpath):
+
+    if os.path.exists(temp_fpath) and forceUpdate == False:
         df = convertCDN2Panda(temp_fpath)
         for field in ['v10', 'u10', 'v100', 'u100', 't2m']:
             if field in era5_variables:
@@ -150,15 +152,13 @@ def get_era5_netcdf(year: int = None, month: int = None,
             pass
         return df
     else:
-        if os.path.exists(str(FILE_NAME_ERA)):
+        if os.path.exists(str(temp_fpath)):
             try:
                 os.remove(temp_fpath)
             except OSError:
                 logging.info("The old file could not be deleted")
             finally:
                 pass
-
-    FILE_NAME_ERA = temp_fpath
     c = cdsapi.Client(
         key=CDS_API_KEY, url="https://cds.climate.copernicus.eu/api/v2")
 
@@ -241,10 +241,14 @@ def convertCDN2Panda(file_name: str = None) -> object:
                 'There is an issue with your MERRA file (might be the wrong MERRA file type). Skipping...')
             continue
 
-    timelist = list(merraData.variables['time'][:])
-    # convert timestamp to isotime
-    timelist = [str(datetime.datetime.fromtimestamp(
-        timestamp).isoformat()) for timestamp in timelist]
+    timelist = merraData.variables['time']
+    timeunit = timelist.__getattribute__('units')
+    time_cal = timelist.__getattribute__('calendar')
+    local_time = nc4.num2date(timelist,
+                              units=timeunit,
+                              only_use_cftime_datetimes=False)  # convert time
+    time_era = pd.to_datetime(pd.Series(local_time), utc=True)
+    timelist = [str(val) for val in list(local_time)]
     latlist = list(merraData.variables['latitude'][:])
     lnglist = list(merraData.variables['longitude'][:])
 
